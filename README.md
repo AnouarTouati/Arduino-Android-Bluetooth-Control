@@ -20,8 +20,8 @@ This project is meant  control and monitor arduino based Gas Detection System.
 2. -   and the strings you send out with Serial.write are EXACTLY 5 charachters long
 3. -   also you should only send one string at a time in the loop cycle
 
-#### Project Diagram
+### Project Diagram
 ![Diagram](diagram.jpg)
 
-#### Arduino Schematic
+### Arduino Schematic
 ![Schematic](schematic.jpg)
