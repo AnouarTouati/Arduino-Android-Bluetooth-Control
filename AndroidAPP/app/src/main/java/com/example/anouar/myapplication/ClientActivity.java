@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -19,21 +18,11 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.UUID;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
 public class ClientActivity extends AppCompatActivity {
 
@@ -41,11 +30,9 @@ public class ClientActivity extends AppCompatActivity {
     public ArrayList<BluetoothDevice> mBTPairedDevicesArray = new ArrayList<>();
     BluetoothAdapter mBTA = BluetoothAdapter.getDefaultAdapter();
 
-    public static BluetoothDevice SelectedDeviceForConnection;
+    public static BluetoothDevice selectedDeviceForConnection;
     Intent ControlActivityIntent;
     public static Activity mClientActivity;
-
-    //static String address=null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,13 +52,13 @@ public class ClientActivity extends AppCompatActivity {
 
         CheckBox mCH = findViewById(R.id.checkBox);
         if (mBTA.isEnabled()) {
-            LoadPreviouslyBondedDevices();
+            loadPreviouslyBondedDevices();
         }
         mCH.setChecked(mBTA.isEnabled());
         mCH.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EnDisBT();
+                enableDisableBluetooth();
             }
         });
         ListView mLV = findViewById(R.id.nonPairedList);
@@ -98,21 +85,8 @@ public class ClientActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-             /*   try {
-                    Method n= mBTPairedDevicesArray.get(position).getClass().getMethod("removeBond");
-                    n.invoke(mBTPairedDevicesArray.get(position),null);
-                    // Method m = mBTPairedDevicesArray.get(position).getClass()
-                    //        .getMethod("removeBond", (Class[]) null);
-                    // m.invoke( mBTPairedDevicesArray.get(position), (Object[]) null);
-                    mBTPairedDevicesArray.remove(position);
-                } catch (Exception e) {
 
-                }
-                RefreshDisplay();
-                */
-
-                SelectedDeviceForConnection = mBTPairedDevicesArray.get(position);
-                // address=SelectedDeviceForConnection .getAddress();
+                selectedDeviceForConnection = mBTPairedDevicesArray.get(position);
 
 
                 startActivity(ControlActivityIntent);
@@ -124,16 +98,16 @@ public class ClientActivity extends AppCompatActivity {
         ScanButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                DiscoverDevices();
+                discoverDevices();
             }
         });
 
 
-        RefreshDisplay();
+        refreshDisplay();
     }
 
 
-    public void EnDisBT() {
+    public void enableDisableBluetooth() {
 
 
         if (mBTA == null) {
@@ -152,13 +126,13 @@ public class ClientActivity extends AppCompatActivity {
                 mBTNonPairedDevicesArray.clear();
                 mBTPairedDevicesArray.clear();
                 mBTA.disable();
-                RefreshDisplay();
+                refreshDisplay();
             }
 
         }
     }
 
-    public void DiscoverDevices() {
+    public void discoverDevices() {
 
         if (mBTA.isDiscovering()) {
             Toast toast = Toast.makeText(this, "is Scanning", Toast.LENGTH_LONG);
@@ -166,10 +140,10 @@ public class ClientActivity extends AppCompatActivity {
         } else {
             mBTNonPairedDevicesArray.clear();
 
-            RefreshDisplay();
+            refreshDisplay();
             int MY_PERMISSION_REQUEST_COARSELOCATION = 1;
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSION_REQUEST_COARSELOCATION);
-            LoadPreviouslyBondedDevices();
+            loadPreviouslyBondedDevices();
             if (mBTA.startDiscovery()) {
                 Toast toast = Toast.makeText(this, "Scanning For near By Devices Started", Toast.LENGTH_LONG);
                 toast.show();
@@ -177,7 +151,7 @@ public class ClientActivity extends AppCompatActivity {
                 Toast toast = Toast.makeText(this, "Scanning Failed", Toast.LENGTH_LONG);
                 toast.show();
                 mBTNonPairedDevicesArray.clear();
-                RefreshDisplay();
+                refreshDisplay();
             }
 
 
@@ -185,7 +159,7 @@ public class ClientActivity extends AppCompatActivity {
 
     }
 
-    public void LoadPreviouslyBondedDevices() {
+    public void loadPreviouslyBondedDevices() {
         Set<BluetoothDevice> pairedDevices = mBTA.getBondedDevices();
         // mBTPairedDevicesArray.addAll(mBTA.getBondedDevices());
         if (pairedDevices.size() > 0) {
@@ -198,10 +172,10 @@ public class ClientActivity extends AppCompatActivity {
 
             }
         }
-        RefreshDisplay();
+        refreshDisplay();
     }
 
-    void RefreshDisplay() {
+    void refreshDisplay() {
         ListView mLV = findViewById(R.id.nonPairedList);
         ArrayList<String> names = new ArrayList<>();
         for (int i = 0; i < mBTNonPairedDevicesArray.size(); i++) {
@@ -238,8 +212,8 @@ public class ClientActivity extends AppCompatActivity {
                         Log.d("BluetoothState", "Bluetooth is ON");
                         CheckBox mCH = findViewById(R.id.checkBox);
                         mCH.setChecked(true);
-                        LoadPreviouslyBondedDevices();
-                        RefreshDisplay();
+                        loadPreviouslyBondedDevices();
+                        refreshDisplay();
                         break;
                     case BluetoothAdapter.STATE_OFF:
                         Log.d("BluetoothState", "Bluetooth is OFF");
@@ -263,7 +237,7 @@ public class ClientActivity extends AppCompatActivity {
                     mBTNonPairedDevicesArray.add(device);
                 }
 
-                RefreshDisplay();
+                refreshDisplay();
 
             }
 
@@ -279,7 +253,7 @@ public class ClientActivity extends AppCompatActivity {
                     Log.d("Bonding", "BluetoothDevice BONDED");
                     mBTPairedDevicesArray.add(mDevice);
                     mBTNonPairedDevicesArray.remove(mDevice);
-                    RefreshDisplay();
+                    refreshDisplay();
                 }
                 if (mDevice.getBondState() == BluetoothDevice.BOND_BONDING) {
                     Log.d("Bonding", "BluetoothDevice BONDING");

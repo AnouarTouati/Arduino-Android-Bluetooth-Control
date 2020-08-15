@@ -1,29 +1,20 @@
 package com.example.anouar.myapplication;
 
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.telephony.PhoneNumberUtils;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
-
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.DelayQueue;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -34,14 +25,14 @@ public class Control extends AppCompatActivity {
     //final UUID mUUID = UUID.fromString("ea8f8174-3dd7-4ff8-844f-783f64682691");
     final UUID mUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-    Handler ConnectThreadHandler;
+    Handler connectThreadHandler;
     BluetoothSocket mBTSocket = null;
-    TextView BuzzerStateTextView;
-    TextView WindowStateTextView;
-    TextView FanStateTextView;
-    boolean BuzzerDeactivatedPermanently = false;
-    boolean FansDeactivatedPermanently = false;
-    boolean WindowsDeactivatedPermanently = false;
+    TextView buzzerStateTextView;
+    TextView windowStateTextView;
+    TextView fanStateTextView;
+    boolean buzzerDeactivatedPermanently = false;
+    boolean fansDeactivatedPermanently = false;
+    boolean windowsDeactivatedPermanently = false;
     Runnable myRunnableTextSetter;
     //List<String> dataToBeSent;
     int DataSendPending = 0;
@@ -52,10 +43,10 @@ public class Control extends AppCompatActivity {
         setContentView(R.layout.activity_control);
 
 
-        FindAndAssignTextViews();
+        findAndAssignTextViews();
 
         CreateNewHandler();
-        ConnectToAdevice(ClientActivity.SelectedDeviceForConnection);
+        connectToAdevice(ClientActivity.selectedDeviceForConnection);
         //  SendData("SendAllData###");
 
 
@@ -63,7 +54,7 @@ public class Control extends AppCompatActivity {
         BuzzerOffButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SendData("BZOFF");
+                sendData("BZOFF");
             }
         });
 
@@ -71,7 +62,7 @@ public class Control extends AppCompatActivity {
         ShutWindowButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SendData("WDOFF");
+                sendData("WDOFF");
             }
         });
 
@@ -79,7 +70,7 @@ public class Control extends AppCompatActivity {
         StopFanButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SendData("FNOFF");
+                sendData("FNOFF");
             }
         });
 
@@ -88,10 +79,10 @@ public class Control extends AppCompatActivity {
         DeactivateBuzzer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (BuzzerDeactivatedPermanently) {
-                    SendData("BZONP");
+                if (buzzerDeactivatedPermanently) {
+                    sendData("BZONP");
                 } else {
-                    SendData("BZOFFP");
+                    sendData("BZOFFP");
                 }
 
             }
@@ -101,10 +92,10 @@ public class Control extends AppCompatActivity {
         DeactivateFans.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (FansDeactivatedPermanently) {
-                    SendData("FNONP");
+                if (fansDeactivatedPermanently) {
+                    sendData("FNONP");
                 } else {
-                    SendData("FNOFFP");
+                    sendData("FNOFFP");
                 }
 
             }
@@ -113,17 +104,17 @@ public class Control extends AppCompatActivity {
         DeactivateWindows.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (WindowsDeactivatedPermanently) {
-                    SendData("WDONP");
+                if (windowsDeactivatedPermanently) {
+                    sendData("WDONP");
                 } else {
-                    SendData("WDOFFP");
+                    sendData("WDOFFP");
                 }
 
             }
         });
     }
 
-    void SetTheTexts(final String str) {
+    void processReceivedDataAndRefreshDisplay(final String str) {
         Log.d("ReceivedFromArduino", str);
         final String stringToBeApplied;
         final TextView tempTextView;
@@ -201,15 +192,15 @@ public class Control extends AppCompatActivity {
                         String ButtonText = tempButton.getText().toString();
                         switch (tempButton.getId()) {
                             case R.id.DeactivateBuzzer:
-                                BuzzerDeactivatedPermanently = true;
+                                buzzerDeactivatedPermanently = true;
                                 ButtonText = "Activate Buzzer";
                                 break;
                             case R.id.DeactivateWindows:
-                                WindowsDeactivatedPermanently = true;
+                                windowsDeactivatedPermanently = true;
                                 ButtonText = "Activate Windows";
                                 break;
                             case R.id.DeactivateFans:
-                                FansDeactivatedPermanently = true;
+                                fansDeactivatedPermanently = true;
                                 ButtonText = "Activate Fans";
                                 break;
 
@@ -220,15 +211,15 @@ public class Control extends AppCompatActivity {
 
                         switch (tempButton.getId()) {
                             case R.id.DeactivateBuzzer:
-                                BuzzerDeactivatedPermanently = false;
+                                buzzerDeactivatedPermanently = false;
                                 ButtonText = "Deactivate Buzzer";
                                 break;
                             case R.id.DeactivateWindows:
-                                WindowsDeactivatedPermanently = false;
+                                windowsDeactivatedPermanently = false;
                                 ButtonText = "Deactivate Windows";
                                 break;
                             case R.id.DeactivateFans:
-                                FansDeactivatedPermanently = false;
+                                fansDeactivatedPermanently = false;
                                 ButtonText = "Deactivate Fans";
                                 break;
                         }
@@ -251,11 +242,11 @@ public class Control extends AppCompatActivity {
     }
 
     public void CreateNewHandler() {
-        ConnectThreadHandler = new Handler() {
+        connectThreadHandler = new Handler() {
             @Override
             public void publish(LogRecord record) {
                 Log.d("Handler", record.getMessage());
-                SetTheTexts(record.getMessage());
+                processReceivedDataAndRefreshDisplay(record.getMessage());
 
             }
 
@@ -273,13 +264,13 @@ public class Control extends AppCompatActivity {
     }
 
 
-    public void SendData(final String str) {
+    public void sendData(final String str) {
 
-        IncrementDataSendPending();
+        incrementDataSendPending();
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                DecrementDataSendPending();
+                decrementDataSendPending();
                 mConnectedThread.Write(str);
             }
         };
@@ -289,19 +280,19 @@ public class Control extends AppCompatActivity {
 
     }
 
-    void DecrementDataSendPending() {
+    void decrementDataSendPending() {
         Log.d("DelaySend", "SendData: " + DataSendPending);
         if (DataSendPending > 0) {
             DataSendPending = DataSendPending - 1;
         }
     }
 
-    void IncrementDataSendPending() {
+    void incrementDataSendPending() {
         //  Log.d("DelaySend", "SendData: "+DataSendPending);
         DataSendPending = DataSendPending + 1;
     }
 
-    public void ConnectToAdevice(BluetoothDevice SelectedDeviceForConnection) {
+    public void connectToAdevice(BluetoothDevice SelectedDeviceForConnection) {
 
         try {
             mBTSocket = SelectedDeviceForConnection.createInsecureRfcommSocketToServiceRecord(mUUID);
@@ -343,7 +334,7 @@ public class Control extends AppCompatActivity {
                     bytes = mInputStream.read(buffer);            //read bytes from input buffer
                     String readMessage = new String(buffer, 0, bytes);
                     // Send the obtained bytes to the UI Activity via handler
-                    ConnectThreadHandler.publish(new LogRecord(Level.ALL, readMessage));
+                    connectThreadHandler.publish(new LogRecord(Level.ALL, readMessage));
                 } catch (IOException e) {
                     break;
                 }
@@ -359,12 +350,12 @@ public class Control extends AppCompatActivity {
         }
     }
 
-    void FindAndAssignTextViews() {
-        BuzzerStateTextView = findViewById(R.id.BuzzerState);
+    void findAndAssignTextViews() {
+        buzzerStateTextView = findViewById(R.id.BuzzerState);
 
-        WindowStateTextView = findViewById(R.id.WindowState);
+        windowStateTextView = findViewById(R.id.WindowState);
 
-        FanStateTextView = findViewById(R.id.FanState);
+        fanStateTextView = findViewById(R.id.FanState);
 
     }
 }
